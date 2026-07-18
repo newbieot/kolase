@@ -203,10 +203,9 @@
 
     let uploadedImages = []; // Format: { img: ImageObj, caption: string }
 
-    // PRELOAD LOGOS - Menggunakan Proxy Anti-CORS untuk menjamin logo bisa digambar ke canvas
+    // PRELOAD LOGOS - Menggunakan Proxy Anti-CORS
     const logoDanantara = new Image();
     logoDanantara.crossOrigin = "Anonymous";
-    // Proxy WSRV agar CORS header terkirim 100%
     logoDanantara.src = "https://wsrv.nl/?url=i.logos-download.com/114236/31133-a03fdeccb09160d96e50de5ec9fdbb6a.png/Danantara_Indonesia_Logo_2025.png&output=png";
 
     const logoPos = new Image();
@@ -244,7 +243,6 @@
                 reader.readAsDataURL(file);
             }
         });
-        // Reset file input agar bisa upload file yg sama lagi jika perlu
         fileInput.value = '';
     }
 
@@ -256,13 +254,11 @@
             const div = document.createElement('div');
             div.className = "flex gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm items-center relative group";
             
-            // Image Preview
             const imgEl = document.createElement('img');
             imgEl.src = item.img.src;
             imgEl.className = "w-16 h-16 object-cover rounded-lg border border-slate-200";
             div.appendChild(imgEl);
 
-            // Input Area
             const inputWrapper = document.createElement('div');
             inputWrapper.className = "flex-1 flex flex-col justify-center";
             
@@ -282,7 +278,6 @@
             }
             div.appendChild(inputWrapper);
             
-            // Tombol Hapus
             const removeBtn = document.createElement('button');
             removeBtn.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>';
             removeBtn.className = "p-2 hover:bg-red-50 rounded-lg transition";
@@ -300,7 +295,6 @@
 
     function checkStatus() { generateBtn.disabled = uploadedImages.length === 0; }
 
-    // Utilitas Menggambar Rounded Box
     function drawRoundedRect(ctx, x, y, width, height, radius) {
         ctx.beginPath();
         ctx.moveTo(x + radius, y);
@@ -324,30 +318,31 @@
             const orientation = orientationSelect.value;
             const usePerPhotoCaption = perPhotoCaptionToggle.checked;
             
-            // Konfigurasi Variabel Resolusi (High Res Output)
             let MAX_WIDTH = 2000;
             let TARGET_ROW_HEIGHT = 600;
 
             if (orientation === 'landscape') {
-                MAX_WIDTH = 2800; // Lebar ekstrim agar baris sedikit
+                MAX_WIDTH = 2800;
                 TARGET_ROW_HEIGHT = 800; 
             } else if (orientation === 'portrait') {
-                MAX_WIDTH = 1200; // Sempit agar baris banyak (kebawah)
+                MAX_WIDTH = 1200;
                 TARGET_ROW_HEIGHT = 450;
             } else {
-                MAX_WIDTH = 2000; // Auto
+                MAX_WIDTH = 2000;
                 TARGET_ROW_HEIGHT = MAX_WIDTH / Math.max(2, Math.ceil(Math.sqrt(uploadedImages.length)));
             }
 
             const PADDING = 80;
             const GAP = 35; 
-            const LOGO_HEIGHT = 160; // Ukuran logo di-besarkan signifikan agar sangat proporsional
+            const LOGO_HEIGHT = 160; 
             const BORDER_RADIUS = 24; 
             const CAPTION = captionInput.value.trim();
-            const HEADER_HEIGHT = CAPTION ? 320 : 220; 
-            const PHOTO_CAPTION_SPACE = usePerPhotoCaption ? 110 : 0; // Space tambahan dibawah foto untuk teks
+            const PHOTO_CAPTION_SPACE = usePerPhotoCaption ? 110 : 0; 
             
-            // Menghitung Distribusi Layout (Justified Algorithm)
+            // LOGIKA HEADER BARU: Menyelaraskan teks di tengah logo
+            // Total tinggi area header = Padding atas (80) + Tinggi Logo (160) + Padding Bawah (80) = 320
+            const HEADER_HEIGHT = PADDING + LOGO_HEIGHT + PADDING; 
+            
             let rows = [];
             let currentRow = [];
             let currentAspectSum = 0;
@@ -376,7 +371,6 @@
                 let availableWidth = MAX_WIDTH - (PADDING * 2) - (GAP * (row.length - 1));
                 let rowHeight = availableWidth / rowAspectSum;
                 
-                // Cap pembesaran baris terakhir
                 if (rowIndex === rows.length - 1 && rows.length > 1) {
                     const avgRowHeight = (yOffset - HEADER_HEIGHT) / (rows.length - 1);
                     if (rowHeight > avgRowHeight * 1.25) rowHeight = avgRowHeight; 
@@ -384,7 +378,6 @@
 
                 let xOffset = PADDING;
                 
-                // Alignment Tengah untuk baris terakhir
                 if (rowIndex === rows.length - 1 && rows.length > 1) {
                     const rowTotalWidth = (rowAspectSum * rowHeight) + (GAP * (row.length - 1));
                     if (rowTotalWidth < (MAX_WIDTH - PADDING * 2)) {
@@ -402,43 +395,45 @@
                     xOffset += w + GAP;
                 });
                 
-                // Tambah tinggi total baris beserta jarak untuk caption fotonya (jika ada)
                 yOffset += rowHeight + PHOTO_CAPTION_SPACE + GAP;
             });
 
-            // Set Resolusi Canvas
             canvas.width = MAX_WIDTH;
             canvas.height = yOffset + (PADDING - GAP); 
 
-            // Fill Background Bersih
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // GAMBAR LOGO KIRI (Danantara)
+            // LOGO KIRI
             if (logoDanantara.complete && logoDanantara.naturalHeight !== 0) {
                 const danW = LOGO_HEIGHT * (logoDanantara.width / logoDanantara.height);
                 ctx.drawImage(logoDanantara, PADDING, PADDING, danW, LOGO_HEIGHT);
             }
 
-            // GAMBAR LOGO KANAN (Pos Indonesia)
+            // LOGO KANAN
             if (logoPos.complete && logoPos.naturalHeight !== 0) {
                 const posW = LOGO_HEIGHT * (logoPos.width / logoPos.height);
                 ctx.drawImage(logoPos, canvas.width - posW - PADDING, PADDING, posW, LOGO_HEIGHT);
             }
 
-            // GAMBAR JUDUL UTAMA
+            // JUDUL DI TENGAH-TENGAH LOGO
             if (CAPTION) {
                 ctx.fillStyle = '#0f172a';
                 ctx.font = 'bold 70px Inter, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(CAPTION, canvas.width / 2, PADDING + LOGO_HEIGHT + 70);
+                
+                // Kunci perbaikan: textBaseline middle mengatur agar teks persis di poros Y yang ditentukan
+                ctx.textBaseline = 'middle'; 
+                // Y diletakkan di titik: Padding Atas + Setengah Tinggi Logo
+                const centerY = PADDING + (LOGO_HEIGHT / 2);
+                
+                ctx.fillText(CAPTION, canvas.width / 2, centerY);
             }
 
-            // GAMBAR FOTO GRID
+            // GAMBAR FOTO
             finalLayout.forEach(layout => {
                 const totalCardHeight = layout.h + PHOTO_CAPTION_SPACE;
 
-                // 1. Gambar Drop Shadow & Background Kartu
                 ctx.save();
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
                 ctx.shadowBlur = 25;
@@ -448,11 +443,9 @@
                 ctx.fill();
                 ctx.restore();
 
-                // 2. Gambar Foto (di-clip agar sudutnya rounded)
                 ctx.save();
                 drawRoundedRect(ctx, layout.x, layout.y, layout.w, layout.h + (usePerPhotoCaption? 0 : BORDER_RADIUS), BORDER_RADIUS);
-                // Jika pakai caption, clip bagian atas saja (bawahnya flat untuk nyambung ke teks). 
-                // Pendekatan praktis: clip kotaknya saja sesuai tinggi gambar.
+                
                 ctx.beginPath();
                 ctx.moveTo(layout.x + BORDER_RADIUS, layout.y);
                 ctx.lineTo(layout.x + layout.w - BORDER_RADIUS, layout.y);
@@ -465,22 +458,19 @@
                 ctx.quadraticCurveTo(layout.x, layout.y, layout.x + BORDER_RADIUS, layout.y);
                 ctx.closePath();
                 ctx.clip();
+                
                 ctx.drawImage(layout.img, layout.x, layout.y, layout.w, layout.h);
                 ctx.restore();
 
-                // 3. Gambar Teks Caption per Foto (Jika Aktif)
                 if (usePerPhotoCaption) {
                     ctx.fillStyle = '#334155';
                     ctx.font = '600 32px Inter, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    
-                    let textToDraw = layout.caption || '';
-                    ctx.fillText(textToDraw, layout.x + (layout.w / 2), layout.y + layout.h + (PHOTO_CAPTION_SPACE / 2));
+                    ctx.fillText(layout.caption || '', layout.x + (layout.w / 2), layout.y + layout.h + (PHOTO_CAPTION_SPACE / 2));
                 }
             });
 
-            // Selesai Render
             loader.classList.add('hidden'); loader.classList.remove('flex');
             emptyState.classList.add('hidden');
             wrapper.classList.remove('hidden');
@@ -489,7 +479,6 @@
         }, 800);
     });
 
-    // Fitur Download Output
     downloadBtn.addEventListener('click', () => {
         try {
             const link = document.createElement('a');
