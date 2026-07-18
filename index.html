@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Smart Photo Collage Maker | Pos Indonesia & Danantara</title>
+    <meta name="description" content="Aplikasi pembuat kolase foto pintar dengan opsi landscape/portrait dan caption per foto. Hasil proporsional dan estetik.">
+    <meta name="author" content="Ikhsan Radiansyah">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
+
+    <!-- Libraries -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lightBg: '#f8fafc',
+                        cardBg: '#ffffff',
+                        posOrange: '#FF5722',
+                        textDark: '#0f172a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
+        
+        body { 
+            background-color: #f1f5f9; 
+            color: #334155; 
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .glass-card { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+        }
+        
+        .drag-active {
+            border-color: #FF5722 !important;
+            background: #fff7ed !important;
+        }
+
+        /* Toggle Switch Custom CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #FF5722;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #FF5722;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+<main class="p-4 md:p-8 flex-1 flex flex-col max-w-7xl mx-auto w-full">
+    
+    <!-- Header Website -->
+    <header class="mb-6 flex justify-between items-center glass-card p-5">
+        <div class="h-10 md:h-14 flex items-center">
+            <img src="https://i.logos-download.com/114236/31133-a03fdeccb09160d96e50de5ec9fdbb6a.png/Danantara_Indonesia_Logo_2025.png" alt="Logo Danantara" class="h-full object-contain">
+        </div>
+        
+        <div class="text-center hidden md:block">
+            <h1 class="text-2xl font-bold tracking-tight text-textDark uppercase font-['Sora']">Smart Collage Pro</h1>
+            <p class="text-xs text-slate-500 mt-1 uppercase font-semibold tracking-wider">Corporate Layout Generator</p>
+        </div>
+
+        <div class="h-10 md:h-14 flex items-center">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/POSIND_2023_%28with_wordmark%29.svg/3840px-POSIND_2023_%28with_wordmark%29.svg.png" alt="Logo Pos Indonesia" class="h-full object-contain">
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8 flex-1">
+        
+        <!-- Kiri: Panel Pengaturan -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            <div class="glass-card p-6 border-t-4 border-posOrange flex flex-col h-full max-h-[800px]">
+                
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                    <i data-lucide="sliders" class="text-posOrange w-5 h-5"></i>
+                    <h2 class="text-lg font-bold uppercase text-textDark">Konfigurasi Kolase</h2>
+                </div>
+
+                <div class="space-y-4 mb-4">
+                    <!-- Orientasi -->
+                    <div>
+                        <label class="block text-xs text-slate-500 font-bold uppercase mb-1.5">Orientasi Output</label>
+                        <select id="orientationSelect" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-textDark focus:outline-none focus:border-posOrange">
+                            <option value="landscape">Landscape (Lebar - Dominan Kesamping)</option>
+                            <option value="portrait">Portrait (Tinggi - Dominan Kebawah)</option>
+                            <option value="auto">Auto (Menyesuaikan Jumlah Foto)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Judul Utama -->
+                    <div>
+                        <label class="block text-xs text-slate-500 font-bold uppercase mb-1.5">Judul Utama (Header)</label>
+                        <input type="text" id="captionInput" placeholder="Contoh: Kunjungan Kerja Danantara 2026..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-textDark focus:outline-none focus:border-posOrange">
+                    </div>
+
+                    <!-- Toggle Caption per Foto -->
+                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div>
+                            <span class="block text-sm font-bold text-textDark">Tampilkan Caption per Foto</span>
+                            <span class="text-xs text-slate-500">Beri deskripsi di bawah masing-masing gambar</span>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="perPhotoCaptionToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 transition-all right-6 border-slate-300"/>
+                            <label for="perPhotoCaptionToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dropzone -->
+                <div id="dropZone" class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-6 transition cursor-pointer hover:bg-slate-50 group mb-4">
+                    <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mb-2 group-hover:text-posOrange transition"></i>
+                    <p class="text-sm font-semibold text-slate-600 text-center">Klik atau Drag foto ke sini</p>
+                    <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+                </div>
+
+                <!-- Daftar File (UI Dinamis) -->
+                <div id="thumbnailContainer" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    <!-- List Foto akan masuk ke sini -->
+                </div>
+
+                <button id="generateBtn" class="mt-4 w-full bg-posOrange hover:bg-[#e64a19] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition duration-300 flex items-center justify-center gap-2 uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i data-lucide="wand-2" class="w-5 h-5"></i> Generate Kolase Resolusi Tinggi
+                </button>
+            </div>
+        </section>
+        
+        <!-- Kanan: Preview Canvas -->
+        <section class="lg:col-span-7 flex flex-col">
+            <div class="glass-card p-6 flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="monitor" class="text-posOrange w-5 h-5"></i>
+                        <h2 class="text-lg font-bold uppercase text-textDark">Preview Hasil</h2>
+                    </div>
+                    <button id="downloadBtn" class="hidden bg-textDark hover:bg-black text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-md transition flex items-center gap-2 uppercase tracking-wide">
+                        <i data-lucide="download" class="w-4 h-4"></i> Download (.PNG)
+                    </button>
+                </div>
+                
+                <div class="flex-1 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden min-h-[500px] p-4 relative shadow-inner">
+                    <p id="emptyStateText" class="text-slate-400 text-sm font-semibold flex items-center gap-2">
+                        <i data-lucide="image" class="w-5 h-5"></i> Area pratinjau kolase...
+                    </p>
+                    <div id="canvasWrapper" class="hidden w-full h-full flex items-center justify-center overflow-auto">
+                        <canvas id="collageCanvas" class="max-w-full h-auto shadow-2xl rounded border border-slate-300"></canvas>
+                    </div>
+                    
+                    <div id="loadingOverlay" class="absolute inset-0 bg-white/80 backdrop-blur-sm hidden flex-col items-center justify-center z-10">
+                        <i data-lucide="loader-2" class="animate-spin w-10 h-10 text-posOrange mb-3"></i>
+                        <p class="text-sm font-bold text-textDark uppercase tracking-wider">Menyusun Layout...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<!-- Footer Terintegrasi -->
+<footer class="w-full box-border border-t border-slate-200 bg-white flex flex-col md:flex-row justify-between items-center px-4 md:px-10 py-5 z-20 font-['Inter'] mt-auto">
+    <div class="flex items-center gap-2 text-slate-800 font-bold text-sm tracking-wide font-['Sora']">
+        <i data-lucide="layout" class="text-posOrange w-4 h-4"></i> Smart Collage Tool
+    </div>
+    <p class="text-slate-500 text-xs hidden md:block">A private intelligent layout dashboard for dynamic corporate imagery processing.</p>
+    <div class="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 px-4 py-1.5 rounded-full text-slate-700 text-xs transition-colors hover:bg-orange-100">
+        <i data-lucide="code-2" class="text-posOrange w-3.5 h-3.5"></i> Built by <strong class="text-posOrange">Ikhsan Radiansyah</strong> &copy; 2026
+    </div>
+</footer>
+
+<script>
+    lucide.createIcons();
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const thumbContainer = document.getElementById('thumbnailContainer');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const captionInput = document.getElementById('captionInput');
+    const orientationSelect = document.getElementById('orientationSelect');
+    const perPhotoCaptionToggle = document.getElementById('perPhotoCaptionToggle');
+    const canvas = document.getElementById('collageCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrapper = document.getElementById('canvasWrapper');
+    const emptyState = document.getElementById('emptyStateText');
+    const loader = document.getElementById('loadingOverlay');
+
+    let uploadedImages = []; // Format: { img: ImageObj, caption: string }
+
+    // PRELOAD LOGOS - Menggunakan Proxy Anti-CORS untuk menjamin logo bisa digambar ke canvas
+    const logoDanantara = new Image();
+    logoDanantara.crossOrigin = "Anonymous";
+    // Proxy WSRV agar CORS header terkirim 100%
+    logoDanantara.src = "https://wsrv.nl/?url=i.logos-download.com/114236/31133-a03fdeccb09160d96e50de5ec9fdbb6a.png/Danantara_Indonesia_Logo_2025.png&output=png";
+
+    const logoPos = new Image();
+    logoPos.crossOrigin = "Anonymous";
+    logoPos.src = "https://wsrv.nl/?url=upload.wikimedia.org/wikipedia/commons/thumb/4/47/POSIND_2023_%28with_wordmark%29.svg/3840px-POSIND_2023_%28with_wordmark%29.svg.png&output=png";
+
+    // Event Listener Toggle
+    perPhotoCaptionToggle.addEventListener('change', renderThumbnails);
+
+    // Event Listeners Drag & Drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-active');
+        handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleFiles(files) {
+        if (!files || files.length === 0) return;
+        Array.from(files).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        uploadedImages.push({ img: img, caption: "" });
+                        renderThumbnails();
+                        checkStatus();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        // Reset file input agar bisa upload file yg sama lagi jika perlu
+        fileInput.value = '';
+    }
+
+    function renderThumbnails() {
+        thumbContainer.innerHTML = '';
+        const showCaptions = perPhotoCaptionToggle.checked;
+
+        uploadedImages.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = "flex gap-3 p-3 bg-white border border-slate-200 rounded-xl shadow-sm items-center relative group";
+            
+            // Image Preview
+            const imgEl = document.createElement('img');
+            imgEl.src = item.img.src;
+            imgEl.className = "w-16 h-16 object-cover rounded-lg border border-slate-200";
+            div.appendChild(imgEl);
+
+            // Input Area
+            const inputWrapper = document.createElement('div');
+            inputWrapper.className = "flex-1 flex flex-col justify-center";
+            
+            if (showCaptions) {
+                const input = document.createElement('input');
+                input.type = "text";
+                input.placeholder = "Ketik caption untuk foto ini...";
+                input.value = item.caption;
+                input.className = "w-full text-sm p-2 border border-slate-300 rounded-md focus:border-posOrange outline-none transition";
+                input.oninput = (e) => { uploadedImages[index].caption = e.target.value; };
+                inputWrapper.appendChild(input);
+            } else {
+                const text = document.createElement('p');
+                text.className = "text-sm font-semibold text-slate-500";
+                text.innerText = `Foto ${index + 1}`;
+                inputWrapper.appendChild(text);
+            }
+            div.appendChild(inputWrapper);
+            
+            // Tombol Hapus
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>';
+            removeBtn.className = "p-2 hover:bg-red-50 rounded-lg transition";
+            removeBtn.onclick = () => {
+                uploadedImages.splice(index, 1);
+                renderThumbnails();
+                checkStatus();
+            };
+            div.appendChild(removeBtn);
+
+            thumbContainer.appendChild(div);
+        });
+        lucide.createIcons();
+    }
+
+    function checkStatus() { generateBtn.disabled = uploadedImages.length === 0; }
+
+    // Utilitas Menggambar Rounded Box
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+
+    // Eksekusi Pembuatan Kolase
+    generateBtn.addEventListener('click', () => {
+        if (uploadedImages.length === 0) return;
+        loader.classList.remove('hidden'); loader.classList.add('flex');
+        
+        setTimeout(() => {
+            const orientation = orientationSelect.value;
+            const usePerPhotoCaption = perPhotoCaptionToggle.checked;
+            
+            // Konfigurasi Variabel Resolusi (High Res Output)
+            let MAX_WIDTH = 2000;
+            let TARGET_ROW_HEIGHT = 600;
+
+            if (orientation === 'landscape') {
+                MAX_WIDTH = 2800; // Lebar ekstrim agar baris sedikit
+                TARGET_ROW_HEIGHT = 800; 
+            } else if (orientation === 'portrait') {
+                MAX_WIDTH = 1200; // Sempit agar baris banyak (kebawah)
+                TARGET_ROW_HEIGHT = 450;
+            } else {
+                MAX_WIDTH = 2000; // Auto
+                TARGET_ROW_HEIGHT = MAX_WIDTH / Math.max(2, Math.ceil(Math.sqrt(uploadedImages.length)));
+            }
+
+            const PADDING = 80;
+            const GAP = 35; 
+            const LOGO_HEIGHT = 160; // Ukuran logo di-besarkan signifikan agar sangat proporsional
+            const BORDER_RADIUS = 24; 
+            const CAPTION = captionInput.value.trim();
+            const HEADER_HEIGHT = CAPTION ? 320 : 220; 
+            const PHOTO_CAPTION_SPACE = usePerPhotoCaption ? 110 : 0; // Space tambahan dibawah foto untuk teks
+            
+            // Menghitung Distribusi Layout (Justified Algorithm)
+            let rows = [];
+            let currentRow = [];
+            let currentAspectSum = 0;
+
+            uploadedImages.forEach(item => {
+                const img = item.img;
+                const aspect = img.width / img.height;
+                const projectedWidth = (currentAspectSum + aspect) * TARGET_ROW_HEIGHT + (GAP * currentRow.length);
+                
+                if (projectedWidth > (MAX_WIDTH - PADDING*2) && currentRow.length > 0) {
+                    rows.push(currentRow);
+                    currentRow = [{item, aspect}];
+                    currentAspectSum = aspect;
+                } else {
+                    currentRow.push({item, aspect});
+                    currentAspectSum += aspect;
+                }
+            });
+            if (currentRow.length > 0) rows.push(currentRow);
+
+            let finalLayout = [];
+            let yOffset = HEADER_HEIGHT;
+
+            rows.forEach((row, rowIndex) => {
+                let rowAspectSum = row.reduce((sum, el) => sum + el.aspect, 0);
+                let availableWidth = MAX_WIDTH - (PADDING * 2) - (GAP * (row.length - 1));
+                let rowHeight = availableWidth / rowAspectSum;
+                
+                // Cap pembesaran baris terakhir
+                if (rowIndex === rows.length - 1 && rows.length > 1) {
+                    const avgRowHeight = (yOffset - HEADER_HEIGHT) / (rows.length - 1);
+                    if (rowHeight > avgRowHeight * 1.25) rowHeight = avgRowHeight; 
+                }
+
+                let xOffset = PADDING;
+                
+                // Alignment Tengah untuk baris terakhir
+                if (rowIndex === rows.length - 1 && rows.length > 1) {
+                    const rowTotalWidth = (rowAspectSum * rowHeight) + (GAP * (row.length - 1));
+                    if (rowTotalWidth < (MAX_WIDTH - PADDING * 2)) {
+                        xOffset = (MAX_WIDTH - rowTotalWidth) / 2;
+                    }
+                }
+
+                row.forEach(el => {
+                    let w = rowHeight * el.aspect;
+                    finalLayout.push({ 
+                        img: el.item.img, 
+                        caption: el.item.caption, 
+                        x: xOffset, y: yOffset, w: w, h: rowHeight 
+                    });
+                    xOffset += w + GAP;
+                });
+                
+                // Tambah tinggi total baris beserta jarak untuk caption fotonya (jika ada)
+                yOffset += rowHeight + PHOTO_CAPTION_SPACE + GAP;
+            });
+
+            // Set Resolusi Canvas
+            canvas.width = MAX_WIDTH;
+            canvas.height = yOffset + (PADDING - GAP); 
+
+            // Fill Background Bersih
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // GAMBAR LOGO KIRI (Danantara)
+            if (logoDanantara.complete && logoDanantara.naturalHeight !== 0) {
+                const danW = LOGO_HEIGHT * (logoDanantara.width / logoDanantara.height);
+                ctx.drawImage(logoDanantara, PADDING, PADDING, danW, LOGO_HEIGHT);
+            }
+
+            // GAMBAR LOGO KANAN (Pos Indonesia)
+            if (logoPos.complete && logoPos.naturalHeight !== 0) {
+                const posW = LOGO_HEIGHT * (logoPos.width / logoPos.height);
+                ctx.drawImage(logoPos, canvas.width - posW - PADDING, PADDING, posW, LOGO_HEIGHT);
+            }
+
+            // GAMBAR JUDUL UTAMA
+            if (CAPTION) {
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 70px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(CAPTION, canvas.width / 2, PADDING + LOGO_HEIGHT + 70);
+            }
+
+            // GAMBAR FOTO GRID
+            finalLayout.forEach(layout => {
+                const totalCardHeight = layout.h + PHOTO_CAPTION_SPACE;
+
+                // 1. Gambar Drop Shadow & Background Kartu
+                ctx.save();
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowBlur = 25;
+                ctx.shadowOffsetY = 12;
+                ctx.fillStyle = '#ffffff';
+                drawRoundedRect(ctx, layout.x, layout.y, layout.w, totalCardHeight, BORDER_RADIUS);
+                ctx.fill();
+                ctx.restore();
+
+                // 2. Gambar Foto (di-clip agar sudutnya rounded)
+                ctx.save();
+                drawRoundedRect(ctx, layout.x, layout.y, layout.w, layout.h + (usePerPhotoCaption? 0 : BORDER_RADIUS), BORDER_RADIUS);
+                // Jika pakai caption, clip bagian atas saja (bawahnya flat untuk nyambung ke teks). 
+                // Pendekatan praktis: clip kotaknya saja sesuai tinggi gambar.
+                ctx.beginPath();
+                ctx.moveTo(layout.x + BORDER_RADIUS, layout.y);
+                ctx.lineTo(layout.x + layout.w - BORDER_RADIUS, layout.y);
+                ctx.quadraticCurveTo(layout.x + layout.w, layout.y, layout.x + layout.w, layout.y + BORDER_RADIUS);
+                ctx.lineTo(layout.x + layout.w, layout.y + layout.h - (usePerPhotoCaption? 0 : BORDER_RADIUS));
+                if(!usePerPhotoCaption) ctx.quadraticCurveTo(layout.x + layout.w, layout.y + layout.h, layout.x + layout.w - BORDER_RADIUS, layout.y + layout.h);
+                ctx.lineTo(layout.x + (usePerPhotoCaption? 0 : BORDER_RADIUS), layout.y + layout.h);
+                if(!usePerPhotoCaption) ctx.quadraticCurveTo(layout.x, layout.y + layout.h, layout.x, layout.y + layout.h - BORDER_RADIUS);
+                ctx.lineTo(layout.x, layout.y + BORDER_RADIUS);
+                ctx.quadraticCurveTo(layout.x, layout.y, layout.x + BORDER_RADIUS, layout.y);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(layout.img, layout.x, layout.y, layout.w, layout.h);
+                ctx.restore();
+
+                // 3. Gambar Teks Caption per Foto (Jika Aktif)
+                if (usePerPhotoCaption) {
+                    ctx.fillStyle = '#334155';
+                    ctx.font = '600 32px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    let textToDraw = layout.caption || '';
+                    ctx.fillText(textToDraw, layout.x + (layout.w / 2), layout.y + layout.h + (PHOTO_CAPTION_SPACE / 2));
+                }
+            });
+
+            // Selesai Render
+            loader.classList.add('hidden'); loader.classList.remove('flex');
+            emptyState.classList.add('hidden');
+            wrapper.classList.remove('hidden');
+            downloadBtn.classList.remove('hidden');
+            
+        }, 800);
+    });
+
+    // Fitur Download Output
+    downloadBtn.addEventListener('click', () => {
+        try {
+            const link = document.createElement('a');
+            link.download = `Smart-Collage-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        } catch (error) {
+            alert('Tidak dapat mengunduh secara otomatis. Silakan klik kanan pada gambar dan pilih "Save image as..."');
+        }
+    });
+
+</script>
+</body>
+</html>
